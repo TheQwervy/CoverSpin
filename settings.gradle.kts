@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "NavigationSample"
+rootProject.name = "CoverSping"
 include(":app")
  

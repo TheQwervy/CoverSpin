@@ -1,4 +1,4 @@
-package com.example.navigationsample
+package com.crispim.coverspin
 
 import android.app.Activity
 import android.content.Intent

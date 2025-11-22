@@ -5,13 +5,13 @@ plugins {
 }
 
 android {
-    namespace = "com.example.navigationsample"
+    namespace = "com.crispim.coverspin"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "com.example.navigationsample"
+        applicationId = "com.crispim.coverspin"
         minSdk = 36
         targetSdk = 36
         versionCode = 1

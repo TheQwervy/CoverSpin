@@ -1,9 +1,8 @@
-package com.example.navigationsample
+package com.crispim.coverspin
 
 import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.graphics.PixelFormat
-import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View

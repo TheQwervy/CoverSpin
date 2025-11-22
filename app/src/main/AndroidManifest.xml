@@ -18,7 +18,7 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/Theme.NavigationSample">
 
@@ -29,7 +29,7 @@
 
         <!-- MainActivity: Apenas verifica permissão e chama a Engine -->
         <activity
-            android:name=".MainActivity"
+            android:name="com.crispim.coverspin.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.TransparentActivity"
             android:excludeFromRecents="true"
@@ -42,7 +42,7 @@
 
         <!-- EngineActivity: Desbloqueia a tela e morre -->
         <activity
-            android:name=".EngineActivity"
+            android:name="com.crispim.coverspin.EngineActivity"
             android:theme="@style/Theme.TransparentActivity"
             android:taskAffinity="com.example.navigationsample.engine"
             android:excludeFromRecents="true"
@@ -53,7 +53,7 @@
 
         <!-- RotationService: Onde a mágica acontece (Overlay de Sistema) -->
         <service
-            android:name=".RotationService"
+            android:name="com.crispim.coverspin.RotationService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse"
