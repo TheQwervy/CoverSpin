@@ -2,10 +2,9 @@ package com.example.navigationsample
 
 import android.app.Activity
 import android.content.Intent
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import androidx.core.net.toUri
 
 class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -14,23 +13,23 @@ class MainActivity : Activity() {
         if (!Settings.canDrawOverlays(this)) {
             val intent = Intent(
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:$packageName")
+                "package:$packageName".toUri()
             )
             startActivityForResult(intent, 123)
         } else {
-            iniciarEngine()
+            startEngine()
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (Settings.canDrawOverlays(this)) {
-            iniciarEngine()
+            startEngine()
         } else {
             finish()
         }
     }
 
-    private fun iniciarEngine() {
+    private fun startEngine() {
         val intent = Intent(this, EngineActivity::class.java)
         startActivity(intent)
         finish()

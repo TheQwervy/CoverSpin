@@ -1,8 +1,6 @@
 package com.example.navigationsample
 
 import android.app.Activity
-import android.app.KeyguardManager
-import android.content.Context
 import android.content.pm.ActivityInfo
 import android.graphics.PixelFormat
 import android.os.Build
@@ -18,24 +16,20 @@ class EngineActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 1. Configurações de Desbloqueio (Activity)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            setShowWhenLocked(true)
-            setTurnScreenOn(true)
+        // Verifica Display
+        val display = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            display
+        } else {
+            windowManager.defaultDisplay
         }
 
-        // Tenta desbloquear imediatamente
-        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            keyguardManager.requestDismissKeyguard(this, null)
+        // ID 0 geralmente é a tela interna principal.
+        if (display != null && display.displayId == 0) {
+            finish()
+            return
         }
 
-        // 2. Criar e Adicionar o Overlay Flutuante
         addRotationOverlay()
-
-        // 3. Sair da frente visualmente
-        // Isso devolve o foco para o YouTube/Launcher, reativando animações e toques,
-        // mas nosso Overlay continua lá forçando a rotação.
         moveTaskToBack(true)
     }
 
@@ -45,10 +39,7 @@ class EngineActivity : Activity() {
         // Criação da View Invisível
         overlayView = View(this)
 
-        // Configuração dos Parâmetros da Janela Flutuante
         val params = WindowManager.LayoutParams(
-            // Tamanho 0 ou 1 pixel é suficiente para overlays de sistema ditar rotação
-            // se tiverem a flag certa. Teste com MATCH_PARENT se 0 falhar.
             0, 0,
 
             // Tipo de Janela: TYPE_APPLICATION_OVERLAY (Android O+)
@@ -87,7 +78,6 @@ class EngineActivity : Activity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // Limpeza ao fechar o app
         if (overlayView != null) {
             val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
             try {
