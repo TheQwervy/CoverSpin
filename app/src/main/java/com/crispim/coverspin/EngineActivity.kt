@@ -39,13 +39,13 @@ class EngineActivity : Activity() {
         if (!isOverlayActive) {
             addRotationOverlay()
         }
-        startKeepAliveService()
+        startRecentAppsService()
         finish()
     }
 
-    private fun startKeepAliveService() {
+    private fun startRecentAppsService() {
         try {
-            val serviceIntent = Intent(this, KeepAliveService::class.java)
+            val serviceIntent = Intent(this, RecentAppsService::class.java)
             startForegroundService(serviceIntent)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -64,10 +64,6 @@ class EngineActivity : Activity() {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
 
             // FLAGS:
-            // NOT_FOCUSABLE: O toque passa para o app de baixo.
-            // NOT_TOUCH_MODAL: Garante que cliques fora não sejam bloqueados.
-            // WATCH_OUTSIDE_TOUCH: Monitora eventos.
-            // SHOW_WHEN_LOCKED: Aparece na capa.
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                     WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or

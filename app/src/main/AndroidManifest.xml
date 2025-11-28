@@ -47,7 +47,7 @@
             android:noHistory="false" />
 
         <service
-            android:name=".KeepAliveService"
+            android:name=".RecentAppsService"
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"

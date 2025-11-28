@@ -9,7 +9,12 @@ import android.os.Looper
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 
-class KeepAliveService : AccessibilityService() {
+enum class VolumeDirection {
+    Up,
+    Down
+}
+
+class RecentAppsService : AccessibilityService() {
 
     private var pendingVolumeRunnable: Runnable? = null
     private val clickDelay = 400L
@@ -36,7 +41,7 @@ class KeepAliveService : AccessibilityService() {
                 }
                 else {
                     pendingVolumeRunnable = Runnable {
-                        adjustVolume()
+                        adjustVolume(VolumeDirection.Up)
                         pendingVolumeRunnable = null
                     }
                     handler.postDelayed(pendingVolumeRunnable!!, clickDelay)
@@ -46,8 +51,20 @@ class KeepAliveService : AccessibilityService() {
         }
 
         if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN && action == KeyEvent.ACTION_DOWN) {
-            performGlobalAction(GLOBAL_ACTION_HOME)
-            return true
+            if (pendingVolumeRunnable != null) {
+                handler.removeCallbacks(pendingVolumeRunnable!!)
+                pendingVolumeRunnable = null
+                performGlobalAction(GLOBAL_ACTION_HOME)
+                return true
+            }
+            else {
+                pendingVolumeRunnable = Runnable {
+                    adjustVolume(VolumeDirection.Down)
+                    pendingVolumeRunnable = null
+                }
+                handler.postDelayed(pendingVolumeRunnable!!, clickDelay)
+                return true
+            }
         }
 
         return super.onKeyEvent(event)
@@ -61,27 +78,34 @@ class KeepAliveService : AccessibilityService() {
                 "com.android.quickstep.RecentsActivity"
             )
             samsungIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            samsungIntent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+            samsungIntent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED) // Tenta forçar reinício
 
             val options = android.app.ActivityOptions.makeBasic()
             val displayManager = getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
-            val targetDisplay = displayManager.getDisplay(1) ?: displayManager.getDisplay(0)
+            val targetDisplay = displayManager.getDisplay(1)
 
             if (targetDisplay != null) {
                 options.launchDisplayId = targetDisplay.displayId
                 startActivity(samsungIntent, options.toBundle())
+                return
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    private fun adjustVolume() {
+    private fun adjustVolume(direction: VolumeDirection) {
         try {
             val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            val adjustment = if (direction == VolumeDirection.Up) {
+                AudioManager.ADJUST_RAISE
+            } else {
+                AudioManager.ADJUST_LOWER
+            }
+
             audioManager.adjustStreamVolume(
                 AudioManager.STREAM_MUSIC,
-                AudioManager.ADJUST_RAISE,
+                adjustment,
                 AudioManager.FLAG_SHOW_UI // Mostra a barra de volume na tela
             )
         } catch (e: Exception) {
