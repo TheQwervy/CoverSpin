@@ -1,8 +1,10 @@
 package com.crispim.coverspin
 
 import android.accessibilityservice.AccessibilityService
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
@@ -19,17 +21,52 @@ class RecentAppsService : AccessibilityService() {
     private var pendingVolumeRunnable: Runnable? = null
     private val clickDelay = 400L
     private val handler = Handler(Looper.getMainLooper())
+    private lateinit var screenStateReceiver: BroadcastReceiver
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
     override fun onInterrupt() {}
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+
+        screenStateReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                when (intent?.action) {
+                    Intent.ACTION_SCREEN_OFF -> {
+                        // Tela desligou/bloqueou: Pede para a Engine parar de forçar rotação
+                        EngineActivity.setRotationEnabled(false)
+                    }
+                    Intent.ACTION_USER_PRESENT -> {
+                        // Usuário desbloqueou: Volta a forçar a rotação
+                        EngineActivity.setRotationEnabled(true)
+                    }
+                }
+            }
+        }
+
+        val filter = IntentFilter()
+        filter.addAction(Intent.ACTION_SCREEN_OFF)
+        filter.addAction(Intent.ACTION_USER_PRESENT)
+        registerReceiver(screenStateReceiver, filter)
+    }
+
+    override fun onDestroy() {
+        try {
+            unregisterReceiver(screenStateReceiver)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        super.onDestroy()
     }
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
         val action = event.action
         val keyCode = event.keyCode
+
+        if (action == KeyEvent.ACTION_UP &&
+            (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)) {
+            return true
+        }
 
         if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
             if (action == KeyEvent.ACTION_DOWN) {

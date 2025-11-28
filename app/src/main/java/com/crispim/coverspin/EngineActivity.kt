@@ -18,12 +18,42 @@ class EngineActivity : Activity() {
 
         val isOverlayActive: Boolean
             get() = overlayView != null
+
+        fun setRotationEnabled(enable: Boolean) {
+            val view = overlayView ?: return
+            try {
+                val windowManager = view.context.getSystemService(WINDOW_SERVICE) as WindowManager
+                val params = view.layoutParams as WindowManager.LayoutParams
+
+                val newOrientation = if (enable) {
+                    ActivityInfo.SCREEN_ORIENTATION_SENSOR
+                } else {
+                    ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                }
+
+                // Só atualiza se mudou para economizar bateria
+                if (params.screenOrientation != newOrientation) {
+                    params.screenOrientation = newOrientation
+                    windowManager.updateViewLayout(view, params)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
-        addRotationOverlay()
+
+        if (intent?.getBooleanExtra("STOP_ACTION", false) == true) {
+            return
+        }
+
+        if (!isOverlayActive) {
+            addRotationOverlay()
+        }
+
         moveTaskToBack(true)
     }
 
@@ -67,9 +97,7 @@ class EngineActivity : Activity() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                     WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                    WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-                    WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD,
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
 
             PixelFormat.TRANSLUCENT
         )

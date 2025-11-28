@@ -18,12 +18,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NavigationSample">
 
-        <!-- Metadados Samsung (Cover Screen) -->
         <meta-data
             android:name="com.samsung.android.icon_on_cover_screen"
             android:value="true" />
 
-        <!-- MainActivity: Apenas verifica permissão e chama a Engine -->
+        <!-- MainActivity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -36,7 +35,7 @@
             </intent-filter>
         </activity>
 
-        <!-- EngineActivity: Desbloqueia a tela e morre -->
+        <!-- EngineActivity -->
         <activity
             android:name=".EngineActivity"
             android:theme="@style/Theme.TransparentActivity"
@@ -46,6 +45,7 @@
             android:configChanges="orientation|screenLayout|screenSize|smallestScreenSize|keyboardHidden"
             android:noHistory="false" />
 
+        <!-- RecentAppsService -->
         <service
             android:name=".RecentAppsService"
             android:enabled="true"
@@ -53,17 +53,14 @@
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:foregroundServiceType="specialUse">
 
-            <!-- Intent Filter obrigatório para aparecer na lista de Acessibilidade -->
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
 
-            <!-- Meta-data obrigatório apontando para o XML de configuração -->
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
 
-            <!-- Propriedade para Android 14+ (Foreground Service) -->
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="overlay_management" />
