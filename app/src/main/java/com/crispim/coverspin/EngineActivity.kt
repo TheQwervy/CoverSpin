@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import androidx.core.content.edit
 
 class EngineActivity : Activity() {
 
@@ -19,6 +20,16 @@ class EngineActivity : Activity() {
 
         val isOverlayActive: Boolean
             get() = overlayView != null
+
+        fun setNewUserPrefRotation(context: Context, enable: Boolean) {
+            context.getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
+                .edit { putBoolean("IS_ROTATION_ENABLED", enable) }
+        }
+
+        fun loadUserPrefRotation(context: Context) : Boolean {
+            return context.getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
+                .getBoolean("IS_ROTATION_ENABLED", true)
+        }
 
         fun setRotationEnabled(enable: Boolean) {
             val view = overlayView ?: return

@@ -20,7 +20,7 @@ class RecentAppsService : AccessibilityService() {
 
     private var pendingVolumeUpRunnable: Runnable? = null
     private var pendingVolumeDownRunnable: Runnable? = null
-    private val clickDelay = 400L
+    private val clickDelay = 300L
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var screenStateReceiver: BroadcastReceiver
 
@@ -34,12 +34,11 @@ class RecentAppsService : AccessibilityService() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 when (intent?.action) {
                     Intent.ACTION_SCREEN_OFF -> {
-                        // Tela desligou/bloqueou: Pede para a Engine parar de forçar rotação
                         EngineActivity.setRotationEnabled(false)
                     }
                     Intent.ACTION_USER_PRESENT -> {
-                        // Usuário desbloqueou: Volta a forçar a rotação
-                        EngineActivity.setRotationEnabled(true)
+                        val shouldRotate = EngineActivity.loadUserPrefRotation(context!!)
+                        if (shouldRotate) EngineActivity.setRotationEnabled(true)
                     }
                 }
             }
@@ -74,8 +73,8 @@ class RecentAppsService : AccessibilityService() {
                 if (pendingVolumeUpRunnable != null) {
                     handler.removeCallbacks(pendingVolumeUpRunnable!!)
                     pendingVolumeUpRunnable = null
-                    //openRecentApps()
-                    EngineActivity.setRotationEnabled(false)
+                    EngineActivity.setRotationEnabled(true)
+                    EngineActivity.setNewUserPrefRotation(this,true)
                     return true
                 }
                 else {
@@ -93,8 +92,8 @@ class RecentAppsService : AccessibilityService() {
             if (pendingVolumeDownRunnable != null) {
                 handler.removeCallbacks(pendingVolumeDownRunnable!!)
                 pendingVolumeDownRunnable = null
-                //performGlobalAction(GLOBAL_ACTION_HOME)
-                EngineActivity.setRotationEnabled(true)
+                EngineActivity.setRotationEnabled(false)
+                EngineActivity.setNewUserPrefRotation(this,false)
                 return true
             }
             else {
