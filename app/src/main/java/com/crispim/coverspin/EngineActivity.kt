@@ -40,7 +40,7 @@ class EngineActivity : Activity() {
                 val newOrientation = if (enable) {
                     ActivityInfo.SCREEN_ORIENTATION_SENSOR
                 } else {
-                    ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                    ActivityInfo.SCREEN_ORIENTATION_LOCKED
                 }
 
                 // Só atualiza se mudou para economizar bateria
