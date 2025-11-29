@@ -22,7 +22,6 @@
             android:name="com.samsung.android.icon_on_cover_screen"
             android:value="true" />
 
-        <!-- MainActivity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -35,7 +34,6 @@
             </intent-filter>
         </activity>
 
-        <!-- EngineActivity -->
         <activity
             android:name=".EngineActivity"
             android:theme="@style/Theme.TransparentActivity"
@@ -45,9 +43,8 @@
             android:configChanges="orientation|screenLayout|screenSize|smallestScreenSize|keyboardHidden"
             android:noHistory="false" />
 
-        <!-- RecentAppsService -->
         <service
-            android:name=".RecentAppsService"
+            android:name=".EventsService"
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"

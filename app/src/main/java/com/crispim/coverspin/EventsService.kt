@@ -16,7 +16,7 @@ enum class VolumeDirection {
     Down
 }
 
-class RecentAppsService : AccessibilityService() {
+class EventsService : AccessibilityService() {
 
     private var pendingVolumeUpRunnable: Runnable? = null
     private var pendingVolumeDownRunnable: Runnable? = null
@@ -34,11 +34,12 @@ class RecentAppsService : AccessibilityService() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 when (intent?.action) {
                     Intent.ACTION_SCREEN_OFF -> {
-                        EngineActivity.setRotationEnabled(false)
+                        EngineActivity.setRotationEnabled(context!!,false)
                     }
                     Intent.ACTION_USER_PRESENT -> {
                         val shouldRotate = EngineActivity.loadUserPrefRotation(context!!)
-                        if (shouldRotate) EngineActivity.setRotationEnabled(true)
+                        if (shouldRotate)
+                            EngineActivity.setRotationEnabled(context,true)
                     }
                 }
             }
@@ -60,9 +61,14 @@ class RecentAppsService : AccessibilityService() {
     }
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
+        val displayManager = getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
+        val mainDisplay = displayManager.getDisplay(0)
+        if (mainDisplay?.state == android.view.Display.STATE_ON) {
+            return super.onKeyEvent(event)
+        }
+
         val action = event.action
         val keyCode = event.keyCode
-
         if (action == KeyEvent.ACTION_UP &&
             (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)) {
             return true
@@ -73,9 +79,12 @@ class RecentAppsService : AccessibilityService() {
                 if (pendingVolumeUpRunnable != null) {
                     handler.removeCallbacks(pendingVolumeUpRunnable!!)
                     pendingVolumeUpRunnable = null
-                    EngineActivity.setRotationEnabled(true)
-                    EngineActivity.setNewUserPrefRotation(this,true)
-                    showToast("Rotation enabled")
+                    if (!EngineActivity.setRotationEnabled(this,true))
+                        showToast("Please initialize CoverSpin")
+                    else {
+                        EngineActivity.setNewUserPrefRotation(this,true)
+                        showToast("Rotation enabled")
+                    }
                     return true
                 }
                 else {
@@ -93,9 +102,12 @@ class RecentAppsService : AccessibilityService() {
             if (pendingVolumeDownRunnable != null) {
                 handler.removeCallbacks(pendingVolumeDownRunnable!!)
                 pendingVolumeDownRunnable = null
-                EngineActivity.setRotationEnabled(false)
-                EngineActivity.setNewUserPrefRotation(this,false)
-                showToast("Rotation disabled")
+                if (!EngineActivity.setRotationEnabled(this,false))
+                    showToast("Please initialize CoverSpin")
+                else {
+                    EngineActivity.setNewUserPrefRotation(this, false)
+                    showToast("Rotation disabled")
+                }
                 return true
             }
             else {

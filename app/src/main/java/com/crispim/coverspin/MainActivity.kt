@@ -24,7 +24,7 @@ class MainActivity : Activity() {
             return
         }
 
-        if (!isAccessibilityServiceEnabled(this, RecentAppsService::class.java)) {
+        if (!isAccessibilityServiceEnabled(this, EventsService::class.java)) {
             Toast.makeText(this, "Por favor, ative o serviço de Acessibilidade para o CoverSpin.", Toast.LENGTH_LONG).show()
             val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
             startActivityForResult(intent, 102)
@@ -36,7 +36,7 @@ class MainActivity : Activity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (Settings.canDrawOverlays(this) && isAccessibilityServiceEnabled(this, RecentAppsService::class.java)) {
+        if (Settings.canDrawOverlays(this) && isAccessibilityServiceEnabled(this, EventsService::class.java)) {
             startEngine()
         } else {
             recreate()

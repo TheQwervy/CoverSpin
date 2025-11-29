@@ -11,12 +11,14 @@ import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import androidx.core.content.edit
+import java.lang.ref.WeakReference
 
 class EngineActivity : Activity() {
 
     companion object {
-        @SuppressLint("StaticFieldLeak")
-        private var overlayView: View? = null
+        private var overlayViewRef: WeakReference<View>? = null
+        private val overlayView: View?
+            get() = overlayViewRef?.get()
 
         val isOverlayActive: Boolean
             get() = overlayView != null
@@ -31,8 +33,8 @@ class EngineActivity : Activity() {
                 .getBoolean("IS_ROTATION_ENABLED", true)
         }
 
-        fun setRotationEnabled(enable: Boolean) {
-            val view = overlayView ?: return
+        fun setRotationEnabled(context: Context, enable: Boolean) : Boolean {
+            val view = overlayView ?: return false
             try {
                 val windowManager = view.context.getSystemService(WINDOW_SERVICE) as WindowManager
                 val params = view.layoutParams as WindowManager.LayoutParams
@@ -50,14 +52,17 @@ class EngineActivity : Activity() {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+                return false;
             }
+            return true;
         }
 
         private fun addRotationOverlay(context: Context) {
             val windowManager = context.getSystemService(WINDOW_SERVICE) as WindowManager
 
             // Criação da View Invisível
-            overlayView = View(context.applicationContext)
+            val newView = View(context.applicationContext)
+            overlayViewRef = WeakReference(newView)
 
             val params = WindowManager.LayoutParams(
                 0, 0,
@@ -79,7 +84,7 @@ class EngineActivity : Activity() {
             params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
 
             try {
-                windowManager.addView(overlayView, params)
+                windowManager.addView(newView, params)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -104,22 +109,23 @@ class EngineActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ID 0 geralmente é a tela interna principal.
-        if (display != null && display.displayId == 0) {
+        val displayManager = getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
+        val mainDisplay = displayManager.getDisplay(0)
+
+        if (mainDisplay?.state == android.view.Display.STATE_ON) {
             finish()
             return
         }
 
-        if (!isOverlayActive) {
+        if (!isOverlayActive)
             addRotationOverlay(this)
-        }
         startRecentAppsService()
         finish()
     }
 
     private fun startRecentAppsService() {
         try {
-            val serviceIntent = Intent(this, RecentAppsService::class.java)
+            val serviceIntent = Intent(this, EventsService::class.java)
             startForegroundService(serviceIntent)
         } catch (e: Exception) {
             e.printStackTrace()
