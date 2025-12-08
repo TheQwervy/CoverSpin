@@ -104,6 +104,9 @@ class MainActivity : ComponentActivity() {
         var hasAccessibilityPermission by remember {
             mutableStateOf(isAccessibilityServiceEnabled(context, EventsService::class.java))
         }
+        var isRotationEnabled by remember {
+            mutableStateOf(EngineActivity.loadUserPrefRotation(context))
+        }
 
         DisposableEffect(context as LifecycleOwner) {
             val observer = LifecycleEventObserver { _, event ->
@@ -112,6 +115,7 @@ class MainActivity : ComponentActivity() {
                     isInnerScreen = displayManager.getDisplay(0)?.state == android.view.Display.STATE_ON
                     hasOverlayPermission = Settings.canDrawOverlays(context)
                     hasAccessibilityPermission = isAccessibilityServiceEnabled(context, EventsService::class.java)
+                    isRotationEnabled = EngineActivity.loadUserPrefRotation(context)
                 }
             }
             context.lifecycle.addObserver(observer)
@@ -182,39 +186,85 @@ class MainActivity : ComponentActivity() {
             }
 
             InfoCard(title = "Settings") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Volume Shortcuts",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = "Use volume keys to rotate",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
+                Column {
+                    // Switch de Rotação
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Rotation Active",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "Manually toggle screen rotation",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Gray
+                            )
+                        }
+                        Switch(
+                            checked = isRotationEnabled,
+                            onCheckedChange = { isChecked ->
+                                isRotationEnabled = isChecked
+                                EngineActivity.setNewUserPrefRotation(context, isChecked)
+                                if (EngineActivity.isOverlayActive) {
+                                    EngineActivity.setRotationEnabled(context, isChecked)
+                                }
+                            },
+                            enabled = isEngineRunning,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.primary,
+                                checkedTrackColor = MaterialTheme.colorScheme.secondary,
+                                uncheckedThumbColor = MaterialTheme.colorScheme.surface,
+                                uncheckedTrackColor = Color.Gray
+                            )
                         )
                     }
-                    Switch(
-                        checked = volumeShortcutsEnabled,
-                        onCheckedChange = { isChecked ->
-                            volumeShortcutsEnabled = isChecked
-                            context.getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
-                                .edit { putBoolean("VOLUME_SHORTCUTS_ENABLED", isChecked) }
-                        },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = MaterialTheme.colorScheme.primary,
-                            checkedTrackColor = MaterialTheme.colorScheme.secondary,
-                            uncheckedThumbColor = MaterialTheme.colorScheme.surface,
-                            uncheckedTrackColor = Color.Gray
-                        )
+                    Spacer (modifier = Modifier.height(12.dp))
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(1.dp)
+                            .background(Color.LightGray.copy(alpha = 0.3f))
                     )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Volume Shortcuts",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "Use volume keys to rotate",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Gray
+                            )
+                        }
+                        Switch(
+                            checked = volumeShortcutsEnabled,
+                            onCheckedChange = { isChecked ->
+                                volumeShortcutsEnabled = isChecked
+                                context.getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
+                                    .edit { putBoolean("VOLUME_SHORTCUTS_ENABLED", isChecked) }
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.primary,
+                                checkedTrackColor = MaterialTheme.colorScheme.secondary,
+                                uncheckedThumbColor = MaterialTheme.colorScheme.surface,
+                                uncheckedTrackColor = Color.Gray
+                            )
+                        )
+                    }
                 }
             }
 
@@ -226,7 +276,10 @@ class MainActivity : ComponentActivity() {
                 onClick = {
                     val intent = Intent(context, EngineActivity::class.java)
                     startActivity(intent)
-                    isEngineRunning = true 
+                    isEngineRunning = true
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                        EngineActivity.setRotationEnabled(context, isRotationEnabled)
+                    }, 500)
                 },
                 enabled = !isEngineRunning && !isInnerScreen && allPermissionsGranted,
                 modifier = Modifier
