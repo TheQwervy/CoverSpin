@@ -15,7 +15,6 @@ class EventsService : AccessibilityService() {
 
     private val SCAN_CODE_VOLUME_DOWN = 115
     private var pendingVolumeDownRunnable: Runnable? = null
-    private val clickDelay = 300L
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var screenStateReceiver: BroadcastReceiver
 
@@ -56,26 +55,32 @@ class EventsService : AccessibilityService() {
     }
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
-        val shortcutsEnabled = getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
-            .getBoolean("VOLUME_SHORTCUTS_ENABLED", true)
-        if (!shortcutsEnabled)
+        val sharedPrefs = getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
+        val shortcutsEnabled = sharedPrefs.getBoolean("VOLUME_SHORTCUTS_ENABLED", true)
+        
+        if (!shortcutsEnabled || event.scanCode != SCAN_CODE_VOLUME_DOWN) {
             return super.onKeyEvent(event)
+        }
 
         val displayManager = getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
         val mainDisplay = displayManager.getDisplay(0)
-        if (mainDisplay?.state == android.view.Display.STATE_ON)
+        if (mainDisplay?.state == android.view.Display.STATE_ON) {
             return super.onKeyEvent(event)
+        }
 
         val action = event.action
 
-        if (event.scanCode == SCAN_CODE_VOLUME_DOWN && action == KeyEvent.ACTION_UP) {
+        if (action == KeyEvent.ACTION_DOWN) {
             return true
         }
 
-        if (event.scanCode == SCAN_CODE_VOLUME_DOWN && action == KeyEvent.ACTION_DOWN) {
+        if (action == KeyEvent.ACTION_UP) {
+            val clickDelay = sharedPrefs.getInt("CLICK_DELAY_MS", 300).toLong()
+
             if (pendingVolumeDownRunnable != null) {
                 handler.removeCallbacks(pendingVolumeDownRunnable!!)
                 pendingVolumeDownRunnable = null
+                
                 val newValue = !EngineActivity.loadUserPrefRotation(this)
                 if (!EngineActivity.setRotationEnabled(this,newValue))
                     showToast("Please initialize CoverSpin")
@@ -104,7 +109,7 @@ class EventsService : AccessibilityService() {
             audioManager.adjustStreamVolume(
                 AudioManager.STREAM_MUSIC,
                 AudioManager.ADJUST_LOWER,
-                AudioManager.FLAG_SHOW_UI // Mostra a barra de volume na tela
+                AudioManager.FLAG_SHOW_UI
             )
         } catch (e: Exception) {
             e.printStackTrace()
