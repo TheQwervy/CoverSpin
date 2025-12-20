@@ -11,16 +11,10 @@ import android.os.Looper
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 
-enum class VolumeDirection {
-    Up,
-    Down
-}
-
 class EventsService : AccessibilityService() {
 
-    private var pendingVolumeUpRunnable: Runnable? = null
+    private val SCAN_CODE_VOLUME_DOWN = 115
     private var pendingVolumeDownRunnable: Runnable? = null
-    private val clickDelay = 300L
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var screenStateReceiver: BroadcastReceiver
 
@@ -61,6 +55,13 @@ class EventsService : AccessibilityService() {
     }
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
+        val sharedPrefs = getSharedPreferences("CoverSpin", Context.MODE_PRIVATE)
+        val shortcutsEnabled = sharedPrefs.getBoolean("VOLUME_SHORTCUTS_ENABLED", true)
+        
+        if (!shortcutsEnabled || event.scanCode != SCAN_CODE_VOLUME_DOWN) {
+            return super.onKeyEvent(event)
+        }
+
         val displayManager = getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
         val mainDisplay = displayManager.getDisplay(0)
         if (mainDisplay?.state == android.view.Display.STATE_ON) {
@@ -68,51 +69,30 @@ class EventsService : AccessibilityService() {
         }
 
         val action = event.action
-        val keyCode = event.keyCode
-        if (action == KeyEvent.ACTION_UP &&
-            (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)) {
+
+        if (action == KeyEvent.ACTION_DOWN) {
             return true
         }
 
-        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
-            if (action == KeyEvent.ACTION_DOWN) {
-                if (pendingVolumeUpRunnable != null) {
-                    handler.removeCallbacks(pendingVolumeUpRunnable!!)
-                    pendingVolumeUpRunnable = null
-                    if (!EngineActivity.setRotationEnabled(this,true))
-                        showToast("Please initialize CoverSpin")
-                    else {
-                        EngineActivity.setNewUserPrefRotation(this,true)
-                        showToast("Rotation enabled")
-                    }
-                    return true
-                }
-                else {
-                    pendingVolumeUpRunnable = Runnable {
-                        adjustVolume(VolumeDirection.Up)
-                        pendingVolumeUpRunnable = null
-                    }
-                    handler.postDelayed(pendingVolumeUpRunnable!!, clickDelay)
-                    return true
-                }
-            }
-        }
+        if (action == KeyEvent.ACTION_UP) {
+            val clickDelay = sharedPrefs.getInt("CLICK_DELAY_MS", 300).toLong()
 
-        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN && action == KeyEvent.ACTION_DOWN) {
             if (pendingVolumeDownRunnable != null) {
                 handler.removeCallbacks(pendingVolumeDownRunnable!!)
                 pendingVolumeDownRunnable = null
-                if (!EngineActivity.setRotationEnabled(this,false))
+                
+                val newValue = !EngineActivity.loadUserPrefRotation(this)
+                if (!EngineActivity.setRotationEnabled(this,newValue))
                     showToast("Please initialize CoverSpin")
                 else {
-                    EngineActivity.setNewUserPrefRotation(this, false)
-                    showToast("Rotation disabled")
+                    EngineActivity.setNewUserPrefRotation(this, newValue)
+                    showToast(if (newValue) "Rotation enabled" else "Rotation disabled")
                 }
                 return true
             }
             else {
                 pendingVolumeDownRunnable = Runnable {
-                    adjustVolume(VolumeDirection.Down)
+                    adjustVolume()
                     pendingVolumeDownRunnable = null
                 }
                 handler.postDelayed(pendingVolumeDownRunnable!!, clickDelay)
@@ -123,43 +103,13 @@ class EventsService : AccessibilityService() {
         return super.onKeyEvent(event)
     }
 
-    private fun openRecentApps() {
-        try {
-            val samsungIntent = Intent()
-            samsungIntent.component = android.content.ComponentName(
-                "com.sec.android.app.launcher",
-                "com.android.quickstep.RecentsActivity"
-            )
-            samsungIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            samsungIntent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED) // Tenta forçar reinício
-
-            val options = android.app.ActivityOptions.makeBasic()
-            val displayManager = getSystemService(Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager
-            val targetDisplay = displayManager.getDisplay(1)
-
-            if (targetDisplay != null) {
-                options.launchDisplayId = targetDisplay.displayId
-                startActivity(samsungIntent, options.toBundle())
-                return
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    private fun adjustVolume(direction: VolumeDirection) {
+    private fun adjustVolume() {
         try {
             val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            val adjustment = if (direction == VolumeDirection.Up) {
-                AudioManager.ADJUST_RAISE
-            } else {
-                AudioManager.ADJUST_LOWER
-            }
-
             audioManager.adjustStreamVolume(
                 AudioManager.STREAM_MUSIC,
-                adjustment,
-                AudioManager.FLAG_SHOW_UI // Mostra a barra de volume na tela
+                AudioManager.ADJUST_LOWER,
+                AudioManager.FLAG_SHOW_UI
             )
         } catch (e: Exception) {
             e.printStackTrace()
