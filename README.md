@@ -5,7 +5,7 @@
 The main goal is to allow screen orientation (Landscape/Portrait/Sensor) to work correctly on external screens (cover screens) where the native OS might impose restrictions.
 
 ## Setup and Installation
-1. Download the latest version. [release](https://github.com/crispim1411/CoverSpin/releases) and extract it.
+1. Download the latest [release](https://github.com/crispim1411/CoverSpin/releases) and extract it.
 2. Install the apk file.
 3. Accept the permissions.
 4. **Important:** Add the app to **Good Lock (MultiStar)** on the Cover Screen launcher.
